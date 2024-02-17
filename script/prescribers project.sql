@@ -174,24 +174,44 @@ ORDER BY total_claims DESC
 
 
 --7. The goal of this exercise is to generate a full list of all pain management specialists in Nashville and the number of claims they had for each opioid. Hint: The results from all 3 parts will have 637 rows.
-SELECT npi,
-	specialty_description,
-	drug_name,
-	opioid_drug_flag,
-	total_claim_count
-FROM prescription
-FULL JOIN prescriber
-USING(npi)
-FULL JOIN drug
-USING(drug_name)
+
+--a. First, create a list of all npi/drug_name combinations for pain management specialists (specialty_description = 'Pain Management) in the city of Nashville (nppes_provider_city = 'NASHVILLE'), where the drug is an opioid (opiod_drug_flag = 'Y'). Warning: Double-check your query before running it. You will only need to use the prescriber and drug tables since you don't need the claims numbers yet.
+SELECT prescriber.npi,
+	prescription.drug_name
+FROM prescriber
+CROSS JOIN prescription
+LEFT JOIN drug
+USING (drug_name)
 WHERE specialty_description = 'Pain Management'
 	AND nppes_provider_city = 'NASHVILLE'
 	AND opioid_drug_flag = 'Y'
-ORDER BY total_claim_count DESC
+ORDER BY total_claim_count
+--b. Next, report the number of claims per drug per prescriber. Be sure to include all combinations, whether or not the prescriber had any claims. You should report the npi, the drug name, and the number of claims (total_claim_count).
+SELECT prescriber.npi,
+	prescription.drug_name,
+	SUM(prescription.total_claim_count) AS number_of_claims
+FROM prescriber
+CROSS JOIN prescription
+LEFT JOIN drug
+USING (drug_name)
+WHERE specialty_description = 'Pain Management'
+	AND nppes_provider_city = 'NASHVILLE'
+	AND opioid_drug_flag = 'Y'
+GROUP BY prescriber.npi, prescription.drug_name
+ORDER BY SUM(prescription.total_claim_count)
 
-
-
-
+--c. Finally, if you have not done so already, fill in any missing values for total_claim_count with 0. Hint - Google the COALESCE function.
+SELECT prescriber.npi,
+	prescription.drug_name,
+	SUM(prescription.total_claim_count)
+FROM prescriber
+LEFT JOIN prescription
+USING (npi)
+CROSS JOIN drug
+WHERE specialty_description = 'Pain Management'
+	AND nppes_provider_city = 'NASHVILLE'
+	AND opioid_drug_flag = 'Y'
+GROUP BY prescriber.npi, prescription.drug_name
 
 
 
